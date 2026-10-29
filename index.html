@@ -1,0 +1,169 @@
+
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>bitstore.zip — Promo Dashboard</title>
+  <style>
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      padding: 24px;
+      background: #f5f5f3;
+      color: #292929;
+      font-family: Arial, sans-serif;
+    }
+    main { max-width: 760px; margin: auto; }
+    header { margin-bottom: 28px; }
+    h1 { margin-bottom: 6px; }
+    .muted { color: #777; font-size: 14px; }
+    .panel {
+      background: white;
+      border: 1px solid #e5e5e2;
+      border-radius: 16px;
+      padding: 20px;
+      margin: 16px 0;
+    }
+    input, select, textarea {
+      width: 100%;
+      padding: 12px;
+      margin: 8px 0 14px;
+      border: 1px solid #ddd;
+      border-radius: 9px;
+      font: inherit;
+    }
+    button {
+      border: 0;
+      border-radius: 9px;
+      padding: 12px 16px;
+      background: #292929;
+      color: white;
+      cursor: pointer;
+      margin: 4px 4px 4px 0;
+    }
+    button.secondary {
+      background: #eee;
+      color: #292929;
+    }
+    .tweet {
+      border: 1px solid #e5e5e2;
+      border-radius: 12px;
+      padding: 16px;
+      margin-top: 12px;
+    }
+    .tag { font-size: 12px; color: #777; }
+    a { color: #444; }
+  </style>
+</head>
+<body>
+<main>
+  <header>
+    <div>🐐 bitstore.zip ♡</div>
+    <h1>Promo Dashboard</h1>
+    <div class="muted">Cari peluang, siapkan balasan, tetap natural.</div>
+  </header>
+
+  <section class="panel">
+    <h3>01 — Cari tweet di X</h3>
+    <label for="product">Produk</label>
+    <select id="product">
+      <option>Spotify Premium</option>
+      <option>Netflix</option>
+      <option>YouTube Premium</option>
+      <option>Canva Pro</option>
+      <option>Apple Music</option>
+      <option>Produk digital lainnya</option>
+    </select>
+    <button onclick="searchX()">Cari di X ↗</button>
+    <p class="muted">Pencarian dibuka di X. Hasil belum diambil otomatis ke dashboard.</p>
+  </section>
+
+  <section class="panel">
+    <h3>02 — Siapkan balasan</h3>
+    <label for="draft">Draf balasan</label>
+    <textarea id="draft" rows="4">hii! 👋 kalau lagi cari produk digital, boleh mampir ke bitstore.zip yaa ♡ tanya-tanya dulu juga boleh!</textarea>
+    <button onclick="copyDraft()">Salin balasan</button>
+    <button class="secondary" onclick="resetDraft()">Reset draf</button>
+    <p id="status" class="muted" aria-live="polite"></p>
+  </section>
+
+  <section class="panel">
+    <h3>03 — Catatan tweet</h3>
+    <label for="tweetUrl">Link tweet yang ditinjau</label>
+    <input id="tweetUrl" type="url" placeholder="https://x.com/.../status/...">
+    <label for="notes">Catatan</label>
+    <input id="notes" placeholder="Contoh: minta rekomendasi Spotify">
+    <button onclick="saveNote()">Simpan catatan</button>
+    <div id="notesList"></div>
+    <p class="muted">Catatan tersimpan di browser ini saja.</p>
+  </section>
+</main>
+
+<script>
+  function searchX() {
+    const product = document.getElementById("product").value;
+    const query = '"' + product + '" lang:id -is:retweet';
+    window.open(
+      "https://x.com/search?q=" + encodeURIComponent(query) + "&f=live",
+      "_blank",
+      "noopener"
+    );
+  }
+
+  async function copyDraft() {
+    const draft = document.getElementById("draft").value;
+    try {
+      await navigator.clipboard.writeText(draft);
+      document.getElementById("status").textContent =
+        "Draf disalin! Tinjau dulu sebelum membalas di X.";
+    } catch {
+      document.getElementById("draft").select();
+      document.getElementById("status").textContent =
+        "Pilih teks lalu tekan Ctrl+C untuk menyalin.";
+    }
+  }
+
+  function resetDraft() {
+    document.getElementById("draft").value =
+      "hii! 👋 kalau lagi cari produk digital, boleh mampir ke bitstore.zip yaa ♡ tanya-tanya dulu juga boleh!";
+    document.getElementById("status").textContent = "";
+  }
+
+  function saveNote() {
+    const url = document.getElementById("tweetUrl").value.trim();
+    const notes = document.getElementById("notes").value.trim();
+
+    if (!url.startsWith("https://x.com/") || !url.includes("/status/")) {
+      alert("Masukkan link tweet X yang valid dulu ya.");
+      return;
+    }
+
+    const items = JSON.parse(localStorage.getItem("bitstoreNotes") || "[]");
+    items.unshift({ url, notes, date: new Date().toLocaleString("id-ID") });
+    localStorage.setItem("bitstoreNotes", JSON.stringify(items.slice(0, 50)));
+    document.getElementById("tweetUrl").value = "";
+    document.getElementById("notes").value = "";
+    renderNotes();
+  }
+
+  function renderNotes() {
+    const items = JSON.parse(localStorage.getItem("bitstoreNotes") || "[]");
+    document.getElementById("notesList").innerHTML = items.map(item =>
+      '<div class="tweet"><a href="' + item.url +
+      '" target="_blank" rel="noopener noreferrer">Buka tweet ↗</a>' +
+      '<p>' + escapeText(item.notes) + '</p><div class="tag">' +
+      escapeText(item.date) + '</div></div>'
+    ).join("");
+  }
+
+  function escapeText(value) {
+    const div = document.createElement("div");
+    div.textContent = value;
+    return div.innerHTML;
+  }
+
+  renderNotes();
+</script>
+</body>
+</html>
